@@ -12,7 +12,7 @@ const upload = require('./middlewares/upload'); // Import your upload middleware
 const app = express();
 
 // Middleware
-app.use(cors({origin:"http://localhost:3000"}));
+app.use(cors({origin:"https://master--savoraddis.netlify.app/"}));
 app.use(express.json());
 app.use(bodyParser.json());
 
