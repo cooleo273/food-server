@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Menu = require('../models/menu.js');
+const Menu = require('../models/Menu.js');
 const upload = require('../middlewares/upload');
 
 // Get all menus
