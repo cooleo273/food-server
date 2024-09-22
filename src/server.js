@@ -12,12 +12,14 @@ const upload = require('./middlewares/upload'); // Import your upload middleware
 const app = express();
 
 // Middleware
-app.use(cors({origin:"https://master--savoraddis.netlify.app/"}));
+app.use(cors({origin:["https://savoraddis.netlify.app", "http://localhost:3000"]}));
 app.use(express.json());
 app.use(bodyParser.json());
 
+const uri = process.env.MONGODB_URI;
+
 // Connect to MongoDB
-mongoose.connect('mongodb://localhost:27017/cafe')
+mongoose.connect(uri)
     .then(() => console.log('MongoDB connected'))
     .catch(err => console.error('MongoDB connection error:', err));
 

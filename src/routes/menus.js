@@ -16,14 +16,13 @@ router.get('/', async (req, res) => {
     }
 });
 
-// Update a menu item
-// routes/menus.js
+// Add a new menu item
 router.post('/', upload.single('photo'), async (req, res) => {
-    const { cafe, name, price, description } = req.body;
+    const { cafe, name, price, description, category } = req.body;
     const photo = req.file ? req.file.path.replace(/\\/g, '/') : ''; // Adjust file path
 
-    if (!cafe || !name || !price || !description) {
-        return res.status(400).json({ error: 'Cafe name, item name, price, and description are required' });
+    if (!cafe || !name || !price || !description || !category) {
+        return res.status(400).json({ error: 'Cafe name, item name, price, description, and category are required' });
     }
 
     const parsedPrice = parseFloat(price);
@@ -36,7 +35,8 @@ router.post('/', upload.single('photo'), async (req, res) => {
             name,
             price: parsedPrice,
             photo,
-            description
+            description,
+            category  // Add category to the new item
         };
 
         let menu = await Menu.findOne({ cafe });
@@ -62,12 +62,13 @@ router.post('/', upload.single('photo'), async (req, res) => {
     }
 });
 
+// Update a menu item
 router.put('/:menuId/:itemId', async (req, res) => {
     const { menuId, itemId } = req.params;
-    const { name, price, description } = req.body;
+    const { name, price, description, category } = req.body;
 
-    if (!name || !price || !description) {
-        return res.status(400).json({ error: 'Item name, price, and description are required' });
+    if (!name || !price || !description || !category) {
+        return res.status(400).json({ error: 'Item name, price, description, and category are required' });
     }
 
     const parsedPrice = parseFloat(price);
@@ -89,6 +90,7 @@ router.put('/:menuId/:itemId', async (req, res) => {
         item.name = name;
         item.price = parsedPrice;
         item.description = description;
+        item.category = category;  // Update category
 
         await menu.save();
         res.json({ message: 'Menu item updated successfully' });

@@ -5,12 +5,13 @@ require('dotenv').config(); // Load Chapa secret key from .env
 const Order = require('../models/Order');
 
 // Initialize Payment Route
-router.post('/pay', async (req, res) => {
+// Initialize Payment Route
+router.post('/pay', async (req, res) => {  
   console.log('Payment request received:', req.body); // Log the request body
   try {
-    const { amount, currency, first_name, tx_ref, callback_url, customization, phoneNumber, cafeName, itemOrdered } = req.body;
+    const { amount, currency, first_name, tx_ref, callback_url, customization, phoneNumber, cafeName, itemOrdered, returnUrl } = req.body;
 
-    if (!amount || !currency || !first_name || !tx_ref || !customization || !phoneNumber || !cafeName || !itemOrdered) {
+    if (!amount || !currency || !first_name || !tx_ref || !customization || !phoneNumber || !cafeName || !itemOrdered || !returnUrl) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -30,6 +31,7 @@ router.post('/pay', async (req, res) => {
         first_name,
         tx_ref,
         callback_url,
+        return_url: returnUrl, // Make sure this is properly set
         customization,
         phoneNumber,
         cafeName,
@@ -62,6 +64,7 @@ router.post('/pay', async (req, res) => {
     res.status(500).json({ error: 'Payment initialization failed' });
   }
 });
+
 
 // Callback Route
 router.post('/callback', async (req, res) => {
