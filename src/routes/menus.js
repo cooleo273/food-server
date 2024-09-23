@@ -19,10 +19,9 @@ router.get('/', async (req, res) => {
 // Add a new menu item
 router.post('/', upload.single('photo'), async (req, res) => {
     const { cafe, name, price, description, category } = req.body;
-    const photo = req.file ? req.file.path.replace(/\\/g, '/') : ''; // Adjust file path
 
     if (!cafe || !name || !price || !description || !category) {
-        return res.status(400).json({ error: 'Cafe name, item name, price, description, and category are required' });
+        return res.status(400).json({ error: 'All fields are required' });
     }
 
     const parsedPrice = parseFloat(price);
@@ -34,14 +33,13 @@ router.post('/', upload.single('photo'), async (req, res) => {
         const newItem = {
             name,
             price: parsedPrice,
-            photo,
+            photo: req.file.path, // Now this will be the Cloudinary URL
             description,
-            category  // Add category to the new item
+            category,
         };
 
         let menu = await Menu.findOne({ cafe });
         if (menu) {
-            // Check if the item already exists
             const itemExists = menu.items.some(item => item.name === name);
             if (itemExists) {
                 return res.status(400).json({ error: 'Item already exists in this cafe menu' });
@@ -50,7 +48,7 @@ router.post('/', upload.single('photo'), async (req, res) => {
         } else {
             menu = new Menu({
                 cafe,
-                items: [newItem]
+                items: [newItem],
             });
         }
 
@@ -58,9 +56,10 @@ router.post('/', upload.single('photo'), async (req, res) => {
         res.status(201).json({ message: 'Menu item added successfully', menu });
     } catch (error) {
         console.error('Error adding menu item:', error);
-        res.status(500).json({ error: 'Failed to add menu item' });
+        res.status(500).json({ error: 'Failed to add menu item', details: error.message });
     }
 });
+
 
 // Update a menu item
 router.put('/:menuId/:itemId', async (req, res) => {
