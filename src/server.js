@@ -25,6 +25,7 @@ const uri = process.env.MONGODB_URI;
 const app = express();
 
 // Middleware
+app.options('*', cors());
 app.use(cors({ origin: ["https://savoraddis.netlify.app", "http://localhost:3000"] }));
 app.use(express.json());
 app.use(bodyParser.json());
