@@ -100,7 +100,7 @@ router.post('/callback', async (req, res) => {
       await order.save();
 
       // Redirect or return a success message with the return URL
-      return res.redirect(order.return_url || '/success-page'); // Redirect to the success URL or default page
+      return res.redirect(order.return_url || '/'); // Redirect to the success URL or default page
     } else {
       return res.status(400).json({ message: 'Payment failed' });
     }
