@@ -80,22 +80,67 @@ router.post('/pay', async (req, res) => {
 });
 
 // Payment Callback Route
-router.post('/payment-callback', async (req, res) => {
-  console.log('Payment callback received:', req.body);
+router.post('/callback', async (req, res) => {
+  console.log('Callback received:', req.body); // Log the callback request body
+  try {
+    const { tx_ref, status } = req.body;
 
-  const { status, tx_ref } = req.body;
-
-  if (status === 'completed') {
-    // Update order status in the database
-    try {
-      await Order.updateOne({ tx_ref }, { $set: { paymentStatus: 'paid' } });
-      console.log(`Order with tx_ref ${tx_ref} updated to Paid`);
-    } catch (error) {
-      console.error('Error updating order:', error);
+    if (!tx_ref || !status) {
+      return res.status(400).json({ error: 'Missing transaction reference or status' });
     }
+
+    const order = await Order.findOne({ tx_ref });
+
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found' });
+    }
+    const response = await axios(options);
+    if (response.status === 'success') {
+      order.paymentStatus = 'paid';
+      await order.save();
+      res.status(200).json({ message: 'Order marked as paid' });
+    } else {
+      res.status(400).json({ message: 'Payment failed' });
+    }
+  } catch (error) {
+    console.error('Callback error:', error.response ? error.response.data : error.message);
+    res.status(500).json({ error: 'Failed to process callback' });
+  }
+});
+
+router.get('/verify', async (req, res) => {
+  console.log('Verification request received:', req.query); // Log the request query parameters
+  const { tx_ref } = req.query;
+
+  if (!tx_ref) {
+    return res.status(400).json({ error: 'Missing transaction reference' });
   }
 
-  res.status(200).send('Callback received');
+  try {
+    const chapaVerifyUrl = `https://api.chapa.co/v1/transaction/verify/${tx_ref}`;
+    const chapaSecretKey = process.env.CHAPA_SECRET_KEY;
+
+    const response = await axios.get(chapaVerifyUrl, {
+      headers: { Authorization: `Bearer ${chapaSecretKey}` },
+    });
+
+    console.log('Verification Response:', response.data);
+
+    if (response.data.status === 'success') {
+      const order = await Order.findOne({ tx_ref });
+      if (order) {
+        order.paymentStatus = 'paid';
+        await order.save();
+        return res.status(200).json({ message: 'Payment verified and order updated' });
+      }
+    }
+    return res.status(400).json({ error: 'Payment verification failed' });
+  } catch (error) {
+    console.error('Payment verification error:', error.response ? error.response.data : error.message);
+    return res.status(500).json({ error: 'Failed to verify payment' });
+  }
 });
+
+
 
 module.exports = router;
