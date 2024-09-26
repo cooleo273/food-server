@@ -55,8 +55,9 @@ router.post('/pay', async (req, res) => {
     const response = await axios(options);
     console.log('Chapa Response:', response.data);
 
-    if (response.data && response.data.payment_url) {
-      return res.json({ payment_url: response.data.payment_url });
+    if (response.data && response.data.data && response.data.data.checkout_url) {
+      return res.json({ payment_url: response.data.data.checkout_url });
+  
     } else {
       return res.status(500).json({ error: 'Failed to initiate payment' });
     }
