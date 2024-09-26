@@ -12,7 +12,7 @@ router.get('/', async (req, res) => {
         // Optional: Format `createdAt` field
         const formattedOrders = orders.map(order => ({
             ...order.toObject(), 
-            orderDate: dayjs(order.createdAt).format('YYYY-MM-DD HH:mm:ss'),  // Format date
+            orderDate: dayjs(order.orderDate).format('YYYY-MM-DD HH:mm:ss'),  // Format date
         }));
         
         res.json(formattedOrders);  // Send the orders with formatted `createdAt` back to the admin
