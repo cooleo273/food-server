@@ -2,6 +2,7 @@ const mongoose = require('mongoose'); // Import mongoose
 
 // Define the order schema
 const orderSchema = new mongoose.Schema({
+  orderDate: { type: Date, required: true },
   customerName: { type: String, required: true }, // Customer's name
   customerPhone: { type: String, required: true }, // Customer's phone number
   items: [{ type: String, required: true }], // Array of items ordered

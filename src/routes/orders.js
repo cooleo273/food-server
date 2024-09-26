@@ -2,16 +2,26 @@ const express = require('express');
 const router = express.Router();
 const Order = require('../models/Order');
 
-// Get all orders
+const dayjs = require('dayjs');
+
+// Get all orders (this is already in your `routes/order.js`)
 router.get('/', async (req, res) => {
     try {
-        const orders = await Order.find();
-        res.json(orders);
+        const orders = await Order.find();  // Fetch orders from the database
+        
+        // Optional: Format `createdAt` field
+        const formattedOrders = orders.map(order => ({
+            ...order.toObject(), 
+            orderDate: dayjs(order.createdAt).format('YYYY-MM-DD HH:mm:ss'),  // Format date
+        }));
+        
+        res.json(formattedOrders);  // Send the orders with formatted `createdAt` back to the admin
     } catch (error) {
         console.error('Error fetching orders:', error);
         res.status(500).json({ message: 'Server error while fetching orders' });
     }
 });
+
 
 // Update order status
 router.put('/:id/status', async (req, res) => {

@@ -5,14 +5,25 @@ require('dotenv').config(); // Load Chapa secret key from .env
 const Order = require('../models/Order');
 
 // Initialize Payment Route
-// Initialize Payment Route
-router.post('/pay', async (req, res) => {  
+router.post('/pay', async (req, res) => {
   console.log('Payment request received:', req.body);
 
   try {
-    const { amount, currency, first_name, tx_ref, callback_url, customization, phoneNumber, cafeName, itemOrdered, returnUrl } = req.body;
+    const {
+      amount,
+      currency,
+      first_name,
+      tx_ref,
+      callback_url,
+      customization,
+      phoneNumber,
+      cafeName,
+      itemOrdered,
+      returnUrl,
+      orderDate // Accept orderDate from frontend
+    } = req.body;
 
-    if (!amount || !currency || !first_name || !tx_ref || !customization || !phoneNumber || !cafeName || !itemOrdered || !returnUrl) {
+    if (!amount || !currency || !first_name || !tx_ref || !customization || !phoneNumber || !cafeName || !itemOrdered || !returnUrl || !orderDate) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
 
@@ -55,6 +66,7 @@ router.post('/pay', async (req, res) => {
         delivered: false,
         payment_url: response.data.data.checkout_url,
         return_url: returnUrl, // Save the returnUrl here for later redirection
+        orderDate: new Date(orderDate), // Save the provided orderDate
       });
 
       res.json({ payment_url: response.data.data.checkout_url, txRef: tx_ref });
@@ -66,8 +78,6 @@ router.post('/pay', async (req, res) => {
     res.status(500).json({ error: 'Payment initialization failed' });
   }
 });
-
-
 
 // Callback Route
 router.post('/callback', async (req, res) => {
@@ -109,8 +119,6 @@ router.post('/callback', async (req, res) => {
     res.status(500).json({ error: 'Failed to process callback' });
   }
 });
-
-
 
 // Verify Payment Route
 router.get('/verify', async (req, res) => {
