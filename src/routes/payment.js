@@ -46,7 +46,7 @@ router.post('/pay', async (req, res) => {
         customization,
         phoneNumber,
         cafeName,
-        itemOrdered,
+        itemOrdered: itemOrdered.map(item => item.name).join(", "),
         meta: { hide_receipt: true },
       },
     };
