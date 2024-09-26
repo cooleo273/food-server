@@ -55,103 +55,34 @@ router.post('/pay', async (req, res) => {
     const response = await axios(options);
     console.log('Chapa Response:', response.data);
 
-    if (response.data && response.data.data && response.data.data.checkout_url) {
-      const newOrder = await Order.create({
-        customerName: first_name,
-        customerPhone: phoneNumber,
-        items: itemOrdered,
-        cafeName: cafeName,
-        tx_ref,
-        paymentStatus,
-        delivered: false,
-        payment_url: response.data.data.checkout_url,
-        return_url: returnUrl, // Save the returnUrl here for later redirection
-        orderDate: new Date(orderDate), // Save the provided orderDate
-      });
-
-      res.json({ payment_url: response.data.data.checkout_url, txRef: tx_ref });
+    if (response.data && response.data.payment_url) {
+      return res.json({ payment_url: response.data.payment_url });
     } else {
-      throw new Error('Failed to get payment URL');
+      return res.status(500).json({ error: 'Failed to initiate payment' });
     }
   } catch (error) {
-    console.error('Payment initialization error:', error.response ? error.response.data : error.message);
+    console.error('Error initializing payment:', error);
     res.status(500).json({ error: 'Payment initialization failed' });
   }
 });
 
-// Callback Route
-router.post('/callback', async (req, res) => {
-  console.log('Callback received:', req.body);
-  try {
-    const { tx_ref, status } = req.body;
+// Payment Callback Route
+router.post('/payment-callback', async (req, res) => {
+  console.log('Payment callback received:', req.body);
 
-    if (!tx_ref || !status) {
-      return res.status(400).json({ error: 'Missing transaction reference or status' });
+  const { status, tx_ref } = req.body;
+
+  if (status === 'completed') {
+    // Update order status in the database
+    try {
+      await Order.updateOne({ tx_ref }, { $set: { status: 'Paid' } });
+      console.log(`Order with tx_ref ${tx_ref} updated to Paid`);
+    } catch (error) {
+      console.error('Error updating order:', error);
     }
-
-    // Verify transaction status from Chapa
-    const chapaVerifyUrl = `https://api.chapa.co/v1/transaction/verify/${tx_ref}`;
-    const chapaSecretKey = process.env.CHAPA_SECRET_KEY;
-
-    const response = await axios.get(chapaVerifyUrl, {
-      headers: { Authorization: `Bearer ${chapaSecretKey}` },
-    });
-
-    const chapaStatus = response.data.data.status;
-    const order = await Order.findOne({ tx_ref });
-
-    if (!order) {
-      return res.status(404).json({ error: 'Order not found' });
-    }
-
-    // Ensure the payment is successful before updating the status and triggering the return URL
-    if (chapaStatus === 'success') {
-      order.paymentStatus = 'paid';
-      await order.save();
-
-      // Redirect or return a success message with the return URL
-      return res.redirect(order.return_url || '/'); // Redirect to the success URL or default page
-    } else {
-      return res.status(400).json({ message: 'Payment failed' });
-    }
-  } catch (error) {
-    console.error('Callback error:', error.response ? error.response.data : error.message);
-    res.status(500).json({ error: 'Failed to process callback' });
-  }
-});
-
-// Verify Payment Route
-router.get('/verify', async (req, res) => {
-  console.log('Verification request received:', req.query); // Log the request query parameters
-  const { tx_ref } = req.query;
-
-  if (!tx_ref) {
-    return res.status(400).json({ error: 'Missing transaction reference' });
   }
 
-  try {
-    const chapaVerifyUrl = `https://api.chapa.co/v1/transaction/verify/${tx_ref}`;
-    const chapaSecretKey = process.env.CHAPA_SECRET_KEY;
-
-    const response = await axios.get(chapaVerifyUrl, {
-      headers: { Authorization: `Bearer ${chapaSecretKey}` },
-    });
-
-    console.log('Verification Response:', response.data);
-
-    if (response.data.status === 'success') {
-      const order = await Order.findOne({ tx_ref });
-      if (order) {
-        order.paymentStatus = 'paid';
-        await order.save();
-        return res.status(200).json({ message: 'Payment verified and order updated' });
-      }
-    }
-    return res.status(400).json({ error: 'Payment verification failed' });
-  } catch (error) {
-    console.error('Payment verification error:', error.response ? error.response.data : error.message);
-    return res.status(500).json({ error: 'Failed to verify payment' });
-  }
+  res.status(200).send('Callback received');
 });
 
 module.exports = router;
