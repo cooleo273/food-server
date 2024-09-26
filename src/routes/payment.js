@@ -43,7 +43,6 @@ router.post('/pay', async (req, res) => {
         first_name,
         tx_ref,
         callback_url,
-        // Do not set return_url here, handle it after successful payment
         customization,
         phoneNumber,
         cafeName,
@@ -56,8 +55,21 @@ router.post('/pay', async (req, res) => {
     console.log('Chapa Response:', response.data);
 
     if (response.data && response.data.data && response.data.data.checkout_url) {
-      return res.json({ payment_url: response.data.data.checkout_url });
-  
+      // Create a new order in the database
+      const newOrder = await Order.create({
+        customerName: first_name,
+        customerPhone: phoneNumber,
+        items: itemOrdered,
+        cafeName: cafeName,
+        tx_ref,
+        paymentStatus: 'pending', // Set initial payment status to pending
+        delivered: false,
+        payment_url: response.data.data.checkout_url,
+        return_url: returnUrl,
+        orderDate: new Date(orderDate), // Save the provided orderDate
+      });
+
+      return res.json({ payment_url: response.data.data.checkout_url, txRef: tx_ref });
     } else {
       return res.status(500).json({ error: 'Failed to initiate payment' });
     }
@@ -76,7 +88,7 @@ router.post('/payment-callback', async (req, res) => {
   if (status === 'completed') {
     // Update order status in the database
     try {
-      await Order.updateOne({ tx_ref }, { $set: { status: 'Paid' } });
+      await Order.updateOne({ tx_ref }, { $set: { paymentStatus: 'paid' } });
       console.log(`Order with tx_ref ${tx_ref} updated to Paid`);
     } catch (error) {
       console.error('Error updating order:', error);
