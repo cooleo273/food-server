@@ -62,7 +62,7 @@ router.post('/pay', async (req, res) => {
         items: itemOrdered,
         cafeName: cafeName,
         tx_ref,
-        paymentStatus: 'pending',
+        paymentStatus,
         delivered: false,
         payment_url: response.data.data.checkout_url,
         return_url: returnUrl, // Save the returnUrl here for later redirection
