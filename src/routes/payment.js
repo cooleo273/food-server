@@ -21,7 +21,8 @@ router.post('/pay', async (req, res) => {
       cafeName,
       itemOrdered,
       returnUrl,
-      orderDate
+      orderDate,
+      grade
     } = req.body;
     
     if (!amount || !currency || !first_name || (!parent_name && !first_name) || !tx_ref || !customization || !phoneNumber || !cafeName || !itemOrdered || !returnUrl || !orderDate) {
@@ -41,6 +42,7 @@ router.post('/pay', async (req, res) => {
       data: {
         amount,
         currency,
+        grade,
         first_name,
         tx_ref,
         callback_url,
@@ -59,7 +61,8 @@ router.post('/pay', async (req, res) => {
       // Create a new order in the database
       const newOrder = await Order.create({
         customerName: first_name,
-        parentsName: parent_name || null,      
+        parentsName: parent_name || null,   
+        grade: grade || null,    
         customerPhone: phoneNumber,
         items: itemOrdered,
         cafeName: cafeName,
