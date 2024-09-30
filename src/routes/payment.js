@@ -13,6 +13,7 @@ router.post('/pay', async (req, res) => {
       amount,
       currency,
       first_name,
+      parent_name, // Added parent name
       tx_ref,
       callback_url,
       customization,
@@ -20,13 +21,13 @@ router.post('/pay', async (req, res) => {
       cafeName,
       itemOrdered,
       returnUrl,
-      orderDate // Accept orderDate from frontend
+      orderDate
     } = req.body;
-
-    if (!amount || !currency || !first_name || !tx_ref || !customization || !phoneNumber || !cafeName || !itemOrdered || !returnUrl || !orderDate) {
+    
+    if (!amount || !currency || !first_name || (!parent_name && !first_name) || !tx_ref || !customization || !phoneNumber || !cafeName || !itemOrdered || !returnUrl || !orderDate) {
       return res.status(400).json({ error: 'Missing required fields' });
     }
-
+    
     const chapaApiUrl = 'https://api.chapa.co/v1/transaction/initialize';
     const chapaSecretKey = process.env.CHAPA_SECRET_KEY;
 
@@ -58,6 +59,7 @@ router.post('/pay', async (req, res) => {
       // Create a new order in the database
       const newOrder = await Order.create({
         customerName: first_name,
+        parentsName: parent_name || null,      
         customerPhone: phoneNumber,
         items: itemOrdered,
         cafeName: cafeName,
