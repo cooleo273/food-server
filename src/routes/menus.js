@@ -62,7 +62,8 @@ router.post('/', upload.single('photo'), async (req, res) => {
 
 
 // Update a menu item
-router.put('/:menuId/:itemId', async (req, res) => {
+// Update a menu item
+router.put('/:menuId/:itemId', upload.single('photo'), async (req, res) => {
     const { menuId, itemId } = req.params;
     const { name, price, description, category } = req.body;
 
@@ -89,7 +90,11 @@ router.put('/:menuId/:itemId', async (req, res) => {
         item.name = name;
         item.price = parsedPrice;
         item.description = description;
-        item.category = category;  // Update category
+        item.category = category;
+
+        if (req.file) {
+            item.photo = req.file.path; // Update the photo if a new one is provided
+        }
 
         await menu.save();
         res.json({ message: 'Menu item updated successfully' });
@@ -98,6 +103,7 @@ router.put('/:menuId/:itemId', async (req, res) => {
         res.status(500).json({ error: 'Failed to update menu item' });
     }
 });
+
 
 // Delete a menu item
 router.delete('/:menuId/:itemId', async (req, res) => {
